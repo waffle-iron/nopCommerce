@@ -18,36 +18,30 @@ namespace Nop.Core.Configuration
         /// <returns>The created section handler object.</returns>
         public object Create(object parent, object configContext, XmlNode section)
         {
-            var config = new NopConfig();
-
             var startupNode = section.SelectSingleNode("Startup");
-            config.IgnoreStartupTasks = GetBool(startupNode, "IgnoreStartupTasks");
-           
             var redisCachingNode = section.SelectSingleNode("RedisCaching");
-            config.RedisCachingEnabled = GetBool(redisCachingNode, "Enabled");
-            config.RedisCachingConnectionString = GetString(redisCachingNode, "ConnectionString");
-
             var userAgentStringsNode = section.SelectSingleNode("UserAgentStrings");
-            config.UserAgentStringsPath = GetString(userAgentStringsNode, "databasePath");
-           
             var supportPreviousNopcommerceVersionsNode = section.SelectSingleNode("SupportPreviousNopcommerceVersions");
-            config.SupportPreviousNopcommerceVersions = GetBool(supportPreviousNopcommerceVersionsNode, "Enabled");
-            
             var webFarmsNode = section.SelectSingleNode("WebFarms");
-            config.MultipleInstancesEnabled = GetBool(webFarmsNode, "MultipleInstancesEnabled");
-            config.RunOnAzureWebsites = GetBool(webFarmsNode, "RunOnAzureWebsites");
-
             var azureBlobStorageNode = section.SelectSingleNode("AzureBlobStorage");
-            config.AzureBlobStorageConnectionString = GetString(azureBlobStorageNode, "ConnectionString");
-            config.AzureBlobStorageContainerName = GetString(azureBlobStorageNode, "ContainerName");
-            config.AzureBlobStorageEndPoint = GetString(azureBlobStorageNode, "EndPoint");
-
             var installationNode = section.SelectSingleNode("Installation");
-            config.DisableSampleDataDuringInstallation = GetBool(installationNode, "DisableSampleDataDuringInstallation");
-            config.UseFastInstallationService = GetBool(installationNode, "UseFastInstallationService");
-            config.PluginsIgnoredDuringInstallation = GetString(installationNode, "PluginsIgnoredDuringInstallation");
 
-            return config;
+            return new NopConfig
+            {
+                IgnoreStartupTasks = GetBool(startupNode, "IgnoreStartupTasks"),
+                RedisCachingEnabled = GetBool(redisCachingNode, "Enabled"),
+                RedisCachingConnectionString = GetString(redisCachingNode, "ConnectionString"),
+                UserAgentStringsPath = GetString(userAgentStringsNode, "databasePath"),
+                SupportPreviousNopcommerceVersions = GetBool(supportPreviousNopcommerceVersionsNode, "Enabled"),
+                MultipleInstancesEnabled = GetBool(webFarmsNode, "MultipleInstancesEnabled"),
+                RunOnAzureWebsites = GetBool(webFarmsNode, "RunOnAzureWebsites"),
+                AzureBlobStorageConnectionString = GetString(azureBlobStorageNode, "ConnectionString"),
+                AzureBlobStorageContainerName = GetString(azureBlobStorageNode, "ContainerName"),
+                AzureBlobStorageEndPoint = GetString(azureBlobStorageNode, "EndPoint"),
+                DisableSampleDataDuringInstallation = GetBool(installationNode, "DisableSampleDataDuringInstallation"),
+                UseFastInstallationService = GetBool(installationNode, "UseFastInstallationService"),
+                PluginsIgnoredDuringInstallation = GetString(installationNode, "PluginsIgnoredDuringInstallation")
+            };
         }
 
         private string GetString(XmlNode node, string attrName)
@@ -78,9 +72,7 @@ namespace Nop.Core.Configuration
         /// Path to database with user agent strings
         /// </summary>
         public string UserAgentStringsPath { get; private set; }
-
-
-
+        
         /// <summary>
         /// Indicates whether we should use Redis server for caching (instead of default in-memory caching)
         /// </summary>
@@ -89,16 +81,12 @@ namespace Nop.Core.Configuration
         /// Redis connection string. Used when Redis caching is enabled
         /// </summary>
         public string RedisCachingConnectionString { get; private set; }
-
-
-
+        
         /// <summary>
         /// Indicates whether we should support previous nopCommerce versions (it can slightly improve performance)
         /// </summary>
         public bool SupportPreviousNopcommerceVersions { get; private set; }
-
-
-
+        
         /// <summary>
         /// A value indicating whether the site is run on multiple instances (e.g. web farm, Windows Azure with multiple instances, etc).
         /// Do not enable it if you run on Azure but use one instance only
@@ -122,8 +110,7 @@ namespace Nop.Core.Configuration
         /// End point for Azure BLOB storage
         /// </summary>
         public string AzureBlobStorageEndPoint { get; private set; }
-
-
+        
         /// <summary>
         /// A value indicating whether a store owner can install sample data during installation
         /// </summary>

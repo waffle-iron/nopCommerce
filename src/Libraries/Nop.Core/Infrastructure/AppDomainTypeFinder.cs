@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -18,10 +19,18 @@ namespace Nop.Core.Infrastructure
         #region Fields
 
         private bool ignoreReflectionErrors = true;
-        private bool loadAppDomainAssemblies = true;
-        private string assemblySkipLoadingPattern = "^System|^mscorlib|^Microsoft|^AjaxControlToolkit|^Antlr3|^Autofac|^AutoMapper|^Castle|^ComponentArt|^CppCodeProvider|^DotNetOpenAuth|^EntityFramework|^EPPlus|^FluentValidation|^ImageResizer|^itextsharp|^log4net|^MaxMind|^MbUnit|^MiniProfiler|^Mono.Math|^MvcContrib|^Newtonsoft|^NHibernate|^nunit|^Org.Mentalis|^PerlRegex|^QuickGraph|^Recaptcha|^Remotion|^RestSharp|^Rhino|^Telerik|^Iesi|^TestDriven|^TestFu|^UserAgentStringLibrary|^VJSharpCodeProvider|^WebActivator|^WebDev|^WebGrease";
-        private string assemblyRestrictToLoadingPattern = ".*";
-        private IList<string> assemblyNames = new List<string>();
+
+        #endregion
+
+        #region Ctor
+
+        public AppDomainTypeFinder()
+        {
+            this.LoadAppDomainAssemblies = true;
+            this.AssemblyNames = new List<string>();
+            this.AssemblySkipLoadingPattern = "^System|^mscorlib|^Microsoft|^AjaxControlToolkit|^Antlr3|^Autofac|^AutoMapper|^Castle|^ComponentArt|^CppCodeProvider|^DotNetOpenAuth|^EntityFramework|^EPPlus|^FluentValidation|^ImageResizer|^itextsharp|^log4net|^MaxMind|^MbUnit|^MiniProfiler|^Mono.Math|^MvcContrib|^Newtonsoft|^NHibernate|^nunit|^Org.Mentalis|^PerlRegex|^QuickGraph|^Recaptcha|^Remotion|^RestSharp|^Rhino|^Telerik|^Iesi|^TestDriven|^TestFu|^UserAgentStringLibrary|^VJSharpCodeProvider|^WebActivator|^WebDev|^WebGrease";
+            this.AssemblyRestrictToLoadingPattern = ".*";
+        }
 
         #endregion
 
@@ -34,33 +43,17 @@ namespace Nop.Core.Infrastructure
         }
 
         /// <summary>Gets or sets whether Nop should iterate assemblies in the app domain when loading Nop types. Loading patterns are applied when loading these assemblies.</summary>
-        public bool LoadAppDomainAssemblies
-        {
-            get { return loadAppDomainAssemblies; }
-            set { loadAppDomainAssemblies = value; }
-        }
+        public bool LoadAppDomainAssemblies { get; set; }
 
         /// <summary>Gets or sets assemblies loaded a startup in addition to those loaded in the AppDomain.</summary>
-        public IList<string> AssemblyNames
-        {
-            get { return assemblyNames; }
-            set { assemblyNames = value; }
-        }
+        public IList<string> AssemblyNames { get; set; }
 
         /// <summary>Gets the pattern for dlls that we know don't need to be investigated.</summary>
-        public string AssemblySkipLoadingPattern
-        {
-            get { return assemblySkipLoadingPattern; }
-            set { assemblySkipLoadingPattern = value; }
-        }
+        public string AssemblySkipLoadingPattern { get; set; }
 
         /// <summary>Gets or sets the pattern for dll that will be investigated. For ease of use this defaults to match all but to increase performance you might want to configure a pattern that includes assemblies and your own.</summary>
         /// <remarks>If you change this so that Nop assemblies arn't investigated (e.g. by not including something like "^Nop|..." you may break core functionality.</remarks>
-        public string AssemblyRestrictToLoadingPattern
-        {
-            get { return assemblyRestrictToLoadingPattern; }
-            set { assemblyRestrictToLoadingPattern = value; }
-        }
+        public string AssemblyRestrictToLoadingPattern { get; set; }
 
         #endregion
 
@@ -101,28 +94,17 @@ namespace Nop.Core.Infrastructure
                             throw;
                         }
                     }
-                    if (types != null)
+                    if (types == null)
+                        continue;
+                    foreach (var t in types)
                     {
-                        foreach (var t in types)
-                        {
-                            if (assignTypeFrom.IsAssignableFrom(t) || (assignTypeFrom.IsGenericTypeDefinition && DoesTypeImplementOpenGeneric(t, assignTypeFrom)))
-                            {
-                                if (!t.IsInterface)
-                                {
-                                    if (onlyConcreteClasses)
-                                    {
-                                        if (t.IsClass && !t.IsAbstract)
-                                        {
-                                            result.Add(t);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        result.Add(t);
-                                    }
-                                }
-                            }
-                        }
+                        var flag = assignTypeFrom.IsAssignableFrom(t) || (assignTypeFrom.IsGenericTypeDefinition && DoesTypeImplementOpenGeneric(t, assignTypeFrom));
+
+                        if(!flag || t.IsInterface)
+                            continue;
+
+                        if(!onlyConcreteClasses || (t.IsClass && !t.IsAbstract))
+                            result.Add(t);
                     }
                 }
             }
@@ -167,14 +149,11 @@ namespace Nop.Core.Infrastructure
         {
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                if (Matches(assembly.FullName))
-                {
-                    if (!addedAssemblyNames.Contains(assembly.FullName))
-                    {
-                        assemblies.Add(assembly);
-                        addedAssemblyNames.Add(assembly.FullName);
-                    }
-                }
+                if (!Matches(assembly.FullName) || addedAssemblyNames.Contains(assembly.FullName))
+                    continue;
+
+                assemblies.Add(assembly);
+                addedAssemblyNames.Add(assembly.FullName);
             }
         }
 
@@ -188,11 +167,11 @@ namespace Nop.Core.Infrastructure
             foreach (string assemblyName in AssemblyNames)
             {
                 Assembly assembly = Assembly.Load(assemblyName);
-                if (!addedAssemblyNames.Contains(assembly.FullName))
-                {
-                    assemblies.Add(assembly);
-                    addedAssemblyNames.Add(assembly.FullName);
-                }
+                if (addedAssemblyNames.Contains(assembly.FullName))
+                    continue;
+
+                assemblies.Add(assembly);
+                addedAssemblyNames.Add(assembly.FullName);
             }
         }
 
@@ -236,11 +215,7 @@ namespace Nop.Core.Infrastructure
         /// </param>
         protected virtual void LoadMatchingAssemblies(string directoryPath)
         {
-            var loadedAssemblyNames = new List<string>();
-            foreach (Assembly a in GetAssemblies())
-            {
-                loadedAssemblyNames.Add(a.FullName);
-            }
+            var loadedAssemblyNames = GetAssemblies().Select(a => a.FullName).ToList();
 
             if (!Directory.Exists(directoryPath))
             {
@@ -291,7 +266,8 @@ namespace Nop.Core.Infrastructure
                     return isMatch;
                 }
                 return false;
-            }catch
+            }
+            catch
             {
                 return false;
             }

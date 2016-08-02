@@ -42,8 +42,7 @@ namespace Nop.Core.Caching
             if (data == null)
                 return;
 
-            var policy = new CacheItemPolicy();
-            policy.AbsoluteExpiration = DateTime.Now + TimeSpan.FromMinutes(cacheTime);
+            var policy = new CacheItemPolicy { AbsoluteExpiration = DateTime.Now + TimeSpan.FromMinutes(cacheTime) };
             Cache.Add(new CacheItem(key, data), policy);
         }
 
@@ -54,7 +53,7 @@ namespace Nop.Core.Caching
         /// <returns>Result</returns>
         public virtual bool IsSet(string key)
         {
-            return (Cache.Contains(key));
+            return Cache.Contains(key);
         }
 
         /// <summary>

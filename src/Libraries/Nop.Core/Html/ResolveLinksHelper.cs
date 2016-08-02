@@ -93,14 +93,9 @@ namespace Nop.Core.Html
             var info = CultureInfo.InvariantCulture;
             foreach (Match match in regex.Matches(text))
             {
-                if (!match.Value.Contains("://"))
-                {
-                    text = text.Replace(match.Value, string.Format(info, link, "http://", match.Value, ShortenUrl(match.Value, MAX_LENGTH)));
-                }
-                else
-                {
-                    text = text.Replace(match.Value, string.Format(info, link, string.Empty, match.Value, ShortenUrl(match.Value, MAX_LENGTH)));
-                }
+                text = text.Replace(match.Value, !match.Value.Contains("://") 
+                    ? string.Format(info, link, "http://", match.Value, ShortenUrl(match.Value, MAX_LENGTH)) 
+                    : string.Format(info, link, string.Empty, match.Value, ShortenUrl(match.Value, MAX_LENGTH)));
             }
 
             return text;

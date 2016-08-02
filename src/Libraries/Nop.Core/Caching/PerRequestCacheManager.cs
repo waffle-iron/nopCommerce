@@ -1,6 +1,6 @@
 using System.Collections;
-using System.Web;
 using System.Linq;
+using System.Web;
 
 namespace Nop.Core.Caching
 {
@@ -25,10 +25,7 @@ namespace Nop.Core.Caching
         /// </summary>
         protected virtual IDictionary GetItems()
         {
-            if (_context != null)
-                return _context.Items;
-
-            return null;
+            return _context == null ? null : _context.Items;
         }
 
         /// <summary>
@@ -40,10 +37,7 @@ namespace Nop.Core.Caching
         public virtual T Get<T>(string key)
         {
             var items = GetItems();
-            if (items == null)
-                return default(T);
-
-            return (T)items[key];
+            return items == null ? default(T) : (T)items[key];
         }
 
         /// <summary>
@@ -58,13 +52,12 @@ namespace Nop.Core.Caching
             if (items == null)
                 return;
 
-            if (data != null)
-            {
-                if (items.Contains(key))
-                    items[key] = data;
-                else
-                    items.Add(key, data);
-            }
+            if (data == null) return;
+
+            if (items.Contains(key))
+                items[key] = data;
+            else
+                items.Add(key, data);
         }
 
         /// <summary>
@@ -75,10 +68,7 @@ namespace Nop.Core.Caching
         public virtual bool IsSet(string key)
         {
             var items = GetItems();
-            if (items == null)
-                return false;
-            
-            return (items[key] != null);
+            return items != null && items[key] != null;
         }
 
         /// <summary>
